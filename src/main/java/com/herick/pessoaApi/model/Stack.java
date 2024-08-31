@@ -22,16 +22,16 @@ public class Stack {
   @Column(nullable = false, unique = true, length = 32)
   private String stack;
 
-  @ManyToMany(mappedBy = "stacks")
-  private Set<Pessoa> pessoas;
-
   // Construtores
   public Stack() {}
 
-  public Stack(long id, String stack, Set<Pessoa> pessoas) {
+  public Stack(long id, String stack) {
     this.id = id;
     this.stack = stack;
-    this.pessoas = pessoas;
+  }
+
+  public Stack(String stack) {
+    this.stack = stack;
   }
 
   // Getters e Setters
@@ -49,14 +49,6 @@ public class Stack {
 
   public void setStack(String stack) {
     this.stack = stack;
-  }
-
-  public Set<Pessoa> getPessoas() {
-    return pessoas;
-  }
-
-  public void setPessoas(Set<Pessoa> pessoas) {
-    this.pessoas = pessoas;
   }
 
   @Override

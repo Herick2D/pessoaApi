@@ -1,12 +1,16 @@
 package com.herick.pessoaApi.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.herick.pessoaApi.dto.PessoaDTO;
 import com.herick.pessoaApi.model.Pessoa;
+import com.herick.pessoaApi.model.Stack;
 import com.herick.pessoaApi.repository.PessoaRepository;
+import com.herick.pessoaApi.repository.StackRepository;
 import com.herick.pessoaApi.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/pessoas")
@@ -26,6 +35,8 @@ public class PessoaController {
   private PessoaRepository pessoaRepository;
   @Autowired
   private PessoaService pessoaService;
+  @Autowired
+  private StackRepository stackRepository;
 
   private boolean isPessoaInvalida(Pessoa pessoa) {
     return pessoa.getNome() == null || pessoa.getNome().isEmpty() ||
@@ -34,66 +45,91 @@ public class PessoaController {
         pessoa.getStack() == null || pessoa.getStack().isEmpty();
   }
 
-  @PostMapping
-  public ResponseEntity<Pessoa> createPessoa(@RequestBody PessoaDTO pessoaDTO) {
-    Pessoa pessoa = new Pessoa(pessoaDTO.getApelido(), pessoaDTO.getNome(), pessoaDTO.getNascimento(), pessoaDTO.getStacks());
-    if (isPessoaInvalida(pessoa)) {
-      return ResponseEntity.unprocessableEntity().body(pessoa);
+  private Set<Stack> saveStacks(Set<String> stacks) {
+    Set<Stack> stacksSaved = new HashSet<>();
+    for (String stack : stacks) {
+      var stackExiste = stackRepository.findByStack(stack);
+      if (stackExiste == null) {
+        var stackSaved = stackRepository.save(new Stack(stack));
+        stacksSaved.add(stackSaved);
+      } else {
+        stacksSaved.add(stackExiste);
+      }
     }
-    pessoaRepository.save(pessoa);
-    return new ResponseEntity<>(pessoa, HttpStatus.CREATED);
+    return stacksSaved;
   }
 
-  @GetMapping
-  public ResponseEntity<List<Pessoa>> getAllPessoas() {
-    List<Pessoa> pessoas = pessoaService.findAll();
-    return new ResponseEntity<>(pessoas, HttpStatus.OK);
+  @PostMapping
+  public ResponseEntity<PessoaDTO> createPessoa(@RequestBody PessoaDTO pessoaDTO) throws JsonProcessingException {
+    if (pessoaDTO.getStack() == null || pessoaDTO.getStack().isEmpty()) {
+      return ResponseEntity.unprocessableEntity().build();
+    }
+    Set<Stack> stacks = saveStacks(pessoaDTO.getStack());
+    Pessoa pessoa = new Pessoa(pessoaDTO.getApelido(), pessoaDTO.getNome(), pessoaDTO.getNascimento());
+    pessoa.setStack(stacks);
+    if (isPessoaInvalida(pessoa)) {
+      return ResponseEntity.unprocessableEntity().body(pessoaDTO);
+    }
+    var pessoaSaved = pessoaRepository.save(pessoa);
+    return new ResponseEntity<>(PessoaDTO.mapToPessoaDTO(pessoaSaved) , HttpStatus.CREATED);
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Pessoa> getPessoaById(@PathVariable Long id) {
+  public ResponseEntity<PessoaDTO> getPessoaById(@PathVariable Long id) {
     Pessoa pessoa = pessoaService.findById(id);
     if (pessoa == null) {
       return ResponseEntity.notFound().build();
     }
-    return new ResponseEntity<>(pessoa, HttpStatus.OK);
+    return new ResponseEntity<>(PessoaDTO.mapToPessoaDTO(pessoa), HttpStatus.OK);
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Pessoa> updatePessoa(@PathVariable Long id, @RequestBody PessoaDTO pessoaDTO) {
-    Pessoa pessoa = pessoaService.findById(id);
-    if (pessoa == null) {
+  public ResponseEntity<PessoaDTO> updatePessoa(@PathVariable Long id, @RequestBody PessoaDTO pessoaDTO) throws JsonProcessingException {
+    Pessoa pessoaExiste = pessoaService.findById(id);
+    if (pessoaExiste == null) {
       return ResponseEntity.notFound().build();
     }
-
     if (
         pessoaDTO.getApelido() == null || pessoaDTO.getApelido().isEmpty() ||
-        pessoaDTO.getNome() == null || pessoaDTO.getNome().isEmpty() ||
-        pessoaDTO.getNascimento() == null || pessoaDTO.getNascimento().isEmpty() ||
-        pessoaDTO.getStacks() == null || pessoaDTO.getStacks().isEmpty()) {
-      return ResponseEntity.unprocessableEntity().body(pessoa);
+            pessoaDTO.getNome() == null || pessoaDTO.getNome().isEmpty() ||
+            pessoaDTO.getNascimento() == null || pessoaDTO.getNascimento().isEmpty() ||
+            pessoaDTO.getStack() == null || pessoaDTO.getStack().isEmpty()) {
+      return ResponseEntity.unprocessableEntity().build();
     }
-    Pessoa pessoaExiste = pessoaService.findById(id);
-    if (pessoaExiste != null) {
-      pessoaExiste.setApelido(pessoaDTO.getApelido());
-      pessoaExiste.setNome(pessoaDTO.getNome());
-      pessoaExiste.setNascimento(pessoaDTO.getNascimento());
-      pessoaExiste.setStack(pessoaDTO.getStacks());
-      pessoaRepository.save(pessoaExiste);
-      return new ResponseEntity<>(pessoaExiste, HttpStatus.OK);
-    }
-    return ResponseEntity.notFound().build(); // ERRO: Faltava um retorno caso pessoaExiste fosse null.
+
+    String apelidoCodificado = URLEncoder.encode(pessoaDTO.getApelido(), StandardCharsets.UTF_8).replace("+", " ");
+
+    Set<String> stacksCodificados = pessoaDTO.getStack().stream()
+            .map(stack -> URLEncoder.encode(stack).replace("+", " "))
+            .collect(Collectors.toSet());
+
+    pessoaExiste.setApelido(apelidoCodificado);
+    pessoaExiste.setNome(pessoaDTO.getNome());
+    pessoaExiste.setNascimento(pessoaDTO.getNascimento());
+    Set<Stack> stacks = saveStacks(stacksCodificados);
+    pessoaExiste.setStack(stacks);
+    pessoaRepository.save(pessoaExiste);
+    var response = PessoaDTO.mapToPessoaDTO(pessoaExiste);
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-//  @GetMapping(params = "t")
-//  public ResponseEntity<List<Pessoa>> searchTermo(@RequestParam(name = "t", required = false) String termo) {
-//    if (termo == null || termo.isEmpty()) {
-//      return ResponseEntity.badRequest().build();
-//    }
-//
-//    List<Pessoa> pessoas = pessoaService.searchTermo(termo);
-//
-//    return new ResponseEntity<>(pessoas, HttpStatus.OK);
-//  }
+  @GetMapping(params = "t")
+  public ResponseEntity<List<PessoaDTO>> searchTermo(@RequestParam(name = "t", required = false) String termo) {
+    if (termo == null || termo.isEmpty()) {
+      return ResponseEntity.badRequest().build();
+    }
 
+    List<Pessoa> pessoas = pessoaRepository.findByTermo(termo);
+    return new ResponseEntity<>(PessoaDTO.mapToPessoaDTOList(pessoas), HttpStatus.OK);
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Pessoa> deletePessoa(@PathVariable Long id) {
+    Pessoa pessoa = pessoaService.findById(id);
+    if (pessoa == null) {
+      return ResponseEntity.badRequest().build();
+    }
+    pessoaService.deletePessoa(id);
+    return ResponseEntity.noContent().build();
+  }
 }

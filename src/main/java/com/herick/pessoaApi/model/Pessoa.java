@@ -1,8 +1,11 @@
 package com.herick.pessoaApi.model;
 
-import com.herick.pessoaApi.dto.StackDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,6 +16,7 @@ import jakarta.persistence.Table;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "pessoas")
@@ -25,13 +29,13 @@ public class Pessoa {
   @Column(nullable = false, unique = true, length = 32)
   private String apelido;
 
-  @Column(nullable = false, unique = true, length = 100)
+  @Column(nullable = false, length = 100)
   private String nome;
 
   @Column(nullable = false)
   private String nascimento;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "stacks_pessoas",
       joinColumns = @JoinColumn(name = "pessoa_id"),
@@ -45,11 +49,10 @@ public class Pessoa {
 
   }
 
-  public Pessoa(String apelido, String nome, String nascimento, Set<Stack> stack) {
+  public Pessoa(String apelido, String nome, String nascimento) throws JsonProcessingException {
     this.apelido = apelido;
     this.nome = nome;
     this.nascimento = nascimento;
-    this.stacks = stack;
   }
 
   // Getters e Setters
@@ -93,8 +96,7 @@ public class Pessoa {
     this.stacks = stack;
   }
 
-
-
+  // Equals e HashCode
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -106,5 +108,15 @@ public class Pessoa {
   @Override
   public int hashCode() {
     return Objects.hashCode(id);
+  }
+
+  public void readStackDTO(Set<String> stacks) throws JsonProcessingException {
+    var mapper = new ObjectMapper();
+    String jsonString = mapper.writeValueAsString(stacks);
+    Set<Stack> stack = mapper.readValue(jsonString, new TypeReference<Set<Stack>>() {});
+    this.stacks = stack;
+    Set<Stack> dtoSet = stacks.stream()
+        .map(Stack::new) // Mapeando cada String para um StringDTO
+        .collect(Collectors.toSet());
   }
 }
