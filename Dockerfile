@@ -1,18 +1,17 @@
 FROM ubuntu:latest as build
 
-RUN apt-get update && apt-get install openjdk-17-jdk -y
+RUN apt-get update
+RUN apt-get install openjdk-17-jdk -y
 
 COPY . .
 
 RUN apt-get install maven -y
 RUN mvn clean install
 
-FROM debian:latest
+FROM openjdk:17-jdk-slim
 
-RUN apt-get update && apt-get install -y openjdk-17-jdk mysql-server
-
-EXPOSE 8080 3306
+EXPOSE 8080
 
 COPY --from=build /target/pessoaApi-0.0.1-SNAPSHOT.jar app.jar
 
-ENTRYPOINT service mysql start && java -jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
