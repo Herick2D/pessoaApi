@@ -1,6 +1,7 @@
 package com.herick.pessoaApi.errors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -39,6 +40,11 @@ public class ExceptionHandlerController {
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
   public ResponseEntity<String> httpRequestMethodHandleException(Exception e) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<String> dataIntegrityViolationMethodHandleException(Exception e) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
   }
 
