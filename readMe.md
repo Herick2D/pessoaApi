@@ -1,44 +1,142 @@
-# Pessoa API
+# Documentação Pessoa API
 
-## Descrição
+O Pessoa API é uma aplicação backend desenvolvida em Spring Boot, que gerencia registros de pessoas e suas respectivas stacks de tecnologia. A API permite realizar operações de CRUD (Create, Read, Update, Delete) para manipular as informações de pessoas e as tecnologias associadas a elas.
 
-O **Pessoa API** é uma aplicação backend desenvolvida em **Spring Boot**, que gerencia registros de pessoas e suas respectivas stacks de tecnologia. A API permite realizar operações de CRUD (Create, Read, Update, Delete) para manipular as informações de pessoas e as tecnologias associadas a elas.
+## Tabela de Conteúdos
 
-## Funcionalidades
+- [Visão Geral](#)
+- [Primeiros Passos](#primeiros-passos)
+    - [Pré-requisitos](#pré-requisitos)
+    - [Instalação](#instalação)
+- [Uso](#uso)
+    - [Endpoints da API](#endpoints-da-api)
+- [Observações](#observações)
 
-1. **Criar Pessoa**  
-   Endpoint: `POST /pessoas`
-    - Cria uma nova pessoa com apelido, nome, data de nascimento e stacks.
-    - Valida se todos os campos obrigatórios estão preenchidos antes de salvar.
+## Primeiros Passos
 
-2. **Buscar Pessoa por ID**  
-   Endpoint: `GET /pessoas/{id}`
-    - Retorna as informações de uma pessoa pelo seu ID.
-    - Caso a pessoa não seja encontrada, retorna `404 Not Found`.
+### Pré-requisitos
 
-3. **Atualizar Pessoa**  
-   Endpoint: `PUT /pessoas/{id}`
-    - Atualiza os dados de uma pessoa existente, incluindo suas stacks.
-    - Valida se todos os campos obrigatórios estão preenchidos.
+Certifique-se de ter o seguinte instalado no seu sistema:
 
-4. **Buscar Pessoas por Termo**  
-   Endpoint: `GET /pessoas?t={termo}`
-    - Busca pessoas que correspondem ao termo fornecido.
-    - Caso o termo não seja passado, retorna um erro `400 Bad Request`.
+- Java 17 ou superior
+- MySQL 8.0 ou superior
+- Ferramentas de testes de API de sua preferencia (Postman, insomnia, etc)
 
-5. **Excluir Pessoa**  
-   Endpoint: `DELETE /pessoas/{id}`
-    - Remove uma pessoa do banco de dados.
-    - Caso a pessoa não exista, retorna `400 Bad Request`.
+## Instalação
 
-## Tecnologias Utilizadas
+1. Clone o repositório:
 
-- **Spring Boot**: Framework principal para construção da API.
-- **Hibernate**: ORM para gerenciar o mapeamento entre objetos e o banco de dados.
-- **MySQL**: Banco de dados utilizado para armazenar os registros de pessoas e stacks.
-- **Maven**: Gerenciador de dependências para o projeto.
-- **Docker**: Utilizado para criar um container com o banco de dados MySQL e virtualizar o ambiente de desenvolvimento.
+```bash
+  git clone git@github.com:Herick2D/pessoaApi.git
+```
+
+2. Atualize o arquivo application.properties com as credenciais do seu banco de dados MySql.
+
+3. Inicie o projeto.
+
+- OBS - Garanta que o arquivo .env tenha as informações compativéis com seu banco de dados.
+
+## Uso
+
+Ao executar a aplicação será iniciada e estará acessível em http://localhost:8080.
+
+### Endpoints da API
+
+### Criação de pessoas
+
+- URL: /pessoas
+- Método: POST
+- Corpo da Requisição:
+
+```
+{
+    "apelido" : "josé",
+    "nome" : "José Roberto",
+    "nascimento" : "2000-10-01",
+    "stack" : ["C#", "Node", "Oracle"]
+}
+```
+
+- Resposta: 201 - Created.
+
+```
+{
+    "id": 1,
+    "apelido": "josé",
+    "nome": "José Roberto",
+    "nascimento": "2000-10-01",
+    "stack": ["C#", "Node", "Oracle"]
+}
+```
+
+
+### Detalhe de uma pessoa
+
+- URL: /pessoas/{id}
+- Método: GET
+- Resposta: 200 - Ok.
+
+```
+{
+    "id": 1,
+    "apelido": "josé",
+    "nome": "José Roberto",
+    "nascimento": "2000-10-01",
+    "stack": ["C#", "Node", "Oracle"]
+}
+```
+
+### Buscar por termos específicos
+_Estarei levando em consideração a busca por termo "berto";_
+
+- URL: /pessoas?t={termo}
+- Método: GET
+- Resposta: 200 - Ok.
+
+```
+[
+    {
+    "apelido" : "josé",
+    "nome" : "José Roberto",
+    "nascimento" : "2000-10-01",
+    "stack" : ["C#", "Node", "Oracle"]
+}
+]
+```
+
+### Alterar Pessoas
+_Estarei levando em consideração o id 1, e a alteração no apelido e stack do mesmo;_
+
+- URL: /pessoas/{id}
+- Método: PUT
+- Corpo da Requisição:
+
+```
+{
+    "apelido" : "Zé",
+    "nome" : "José Roberto",
+    "nascimento" : "2000-10-01",
+    "stack" : ["C++", "Java", "AWS"]
+}
+```
+
+- Resposta:
+
+```
+{
+    "id": 1,
+    "apelido": "Zé",
+    "nome": "José Roberto",
+    "nascimento": "2000-10-01",
+    "stack": ["Java", "C++", "AWS"]
+}
+```
+
+Excluir Pessoa
+
+- URL:  /pessoas/{id}
+- Método: Delete
+- Resposta: 204 - No Content
 
 ## Observações
-
 Este projeto foi desenvolvido como parte de um desafio técnico com prazo de tempo limitado, por esse motivo, pode conter bugs e comportamentos inesperados. Agradeço por contribuições e sugestões de melhorias são bem-vindas.

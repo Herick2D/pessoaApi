@@ -20,12 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/pessoas")
@@ -97,16 +94,10 @@ public class PessoaController {
       return ResponseEntity.unprocessableEntity().build();
     }
 
-    String apelidoCodificado = URLEncoder.encode(pessoaDTO.getApelido(), StandardCharsets.UTF_8).replace("+", " ");
-
-    Set<String> stacksCodificados = pessoaDTO.getStack().stream()
-            .map(stack -> URLEncoder.encode(stack).replace("+", " "))
-            .collect(Collectors.toSet());
-
-    pessoaExiste.setApelido(apelidoCodificado);
+    pessoaExiste.setApelido(pessoaDTO.getApelido());
     pessoaExiste.setNome(pessoaDTO.getNome());
     pessoaExiste.setNascimento(pessoaDTO.getNascimento());
-    Set<Stack> stacks = saveStacks(stacksCodificados);
+    Set<Stack> stacks = saveStacks(pessoaDTO.getStack());
     pessoaExiste.setStack(stacks);
     pessoaRepository.save(pessoaExiste);
     var response = PessoaDTO.mapToPessoaDTO(pessoaExiste);
