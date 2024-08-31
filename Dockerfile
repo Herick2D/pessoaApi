@@ -1,7 +1,6 @@
 FROM ubuntu:latest as build
 
-RUN apt-get update
-RUN apt-get install openjdk-17-jdk -y
+RUN apt-get update && apt-get install openjdk-17-jdk -y
 
 COPY . .
 
@@ -10,8 +9,10 @@ RUN mvn clean install
 
 FROM openjdk:17-jdk-slim
 
-EXPOSE 8080
+RUN apt-get update && apt-get install -y mysql-server
+
+EXPOSE 8080 3306
 
 COPY --from=build /target/pessoaApi-0.0.1-SNAPSHOT.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT service mysql start && java -jar app.jar
