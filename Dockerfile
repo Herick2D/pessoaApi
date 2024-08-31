@@ -7,9 +7,9 @@ COPY . .
 RUN apt-get install maven -y
 RUN mvn clean install
 
-FROM openjdk:17-jdk-slim
+FROM debian:latest
 
-RUN apt-get update && apt-get install -y mysql-server
+RUN apt-get update && apt-get install -y openjdk-17-jdk mysql-server
 
 EXPOSE 8080 3306
 
