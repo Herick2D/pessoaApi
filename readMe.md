@@ -27,7 +27,7 @@ Certifique-se de ter o seguinte instalado no seu sistema:
 1. Clone o repositório:
 
 ```bash
-  git clone git@github.com:Herick2D/pessoaApi.git
+git clone git@github.com:Herick2D/pessoaApi.git
 ```
 
 2. Atualize o arquivo application.properties com as credenciais do seu banco de dados MySql.
