@@ -34,8 +34,6 @@ Certifique-se de ter o seguinte instalado no seu sistema:
 
 3. Inicie o projeto.
 
-- OBS - Garanta que o arquivo .env tenha as informações compativéis com seu banco de dados.
-
 ## Uso
 
 Ao executar a aplicação será iniciada e estará acessível em http://localhost:8080.
